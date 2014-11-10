@@ -8,16 +8,23 @@ namespace Assets.Scripts
 {
     public class GridManager : MonoBehaviour
     {
+        [HideInInspector]
         public Dictionary<Point, Tile> Board;
+        public Dictionary<Point, PlayerBehavior> Players;
 
         //selectedTile stores the tile mouse cursor is hovering on
+        [HideInInspector]
         public Tile selectedTile = null;
         //TB of the tile which is the start of the path
+        [HideInInspector]
         public TileBehavior originTileTB = null;
         //TB of the tile which is the end of the path
+        [HideInInspector]
         public TileBehavior destTileTB = null;
 
         public static GridManager instance = null;
+        [HideInInspector]
+        public ITransformer Transformer = null;
 
         //following public variable is used to store the hex model prefab;
         //instantiate it by dragging the prefab on this variable using unity editor
@@ -29,20 +36,25 @@ namespace Assets.Scripts
         //Line should be initialised to some 3d object that can fit nicely in the center of a 
         //hex tile and will be used to indicate the path. For example, it can be just a simple small 
         //sphere with some material attached to it. Initialise the variable using inspector pane.
-        public GameObject PathMarker;
+        //public GameObject PathMarker;
+
         //List to hold "Lines" indicating the path
         List<GameObject> pathMarkers;
 
         public GameObject Wizard;
 
-        //Hexagon tile width and height in game world
-        private float hexWidth;
-        private float hexHeight;
-
-
         void Awake()
         {
             instance = this;
+        }
+
+        //The grid should be generated on game start
+        void Start()
+        {
+            Transformer = new Transformer(Hex.renderer.bounds.size.x, Hex.renderer.bounds.size.z);
+            createGrid();
+            createPlayers();
+            
         }
 
         void createGrid()
@@ -50,25 +62,18 @@ namespace Assets.Scripts
             GameObject hexGridGO = new GameObject("HexGrid");
             Board = new Dictionary<Point, Tile>();
 
-            for (float y = 0; y < gridHeightInHexes; y++)
+            for (int y = 0; y < gridHeightInHexes; y++)
             {
-                float sizeX = gridWidthInHexes;
-                //if the offset row sticks up, reduce the number of hexes in a row
-                //not capping ground size 
-                //if (y % 2 != 0 && (gridSize.x + 0.5) * hexWidth > groundWidth)
-                //    sizeX--;
-
-                for (float x = 0; x < sizeX; x++)
+                for (int x = 0; x < gridWidthInHexes; x++)
                 {
                     GameObject hex = (GameObject)Instantiate(Hex);
-                    Vector2 gridPos = new Vector2(x, y);
-                    hex.transform.position = calcWorldCoord(gridPos);
+                    var gridPos = new Point(x, y);
+                    hex.transform.position = Transformer.GetWorldCoords(gridPos);
                     hex.transform.parent = hexGridGO.transform;
-                    //TileBehabiour object is retrieved
                     var tb = hex.GetComponent<TileBehavior>();
                     //y / 2 is subtracted from x because we are using straight axis coordinate system
                     tb.tile = new Tile((int)x - (int)(y / 2), (int)y);
-                    Board.Add(new Point((int)gridPos.x, (int)gridPos.y), tb.tile);
+                    Board.Add(gridPos, tb.tile);
                 }
             }
             //build adjacency lists
@@ -95,8 +100,8 @@ namespace Assets.Scripts
                 var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 //calcWorldCoord method uses squiggly axis coordinates so we add y / 2 to convert x 
                 //coordinate from straight axis coordinate system
-                Vector2 gridPos = new Vector2(tile.X + tile.Y / 2, tile.Y);
-                marker.transform.position = calcWorldCoord(gridPos);
+                var gridPos = new Point(tile.X + tile.Y / 2, tile.Y);
+                marker.transform.position = Transformer.GetWorldCoords(gridPos);
                 this.pathMarkers.Add(marker);
                 marker.transform.parent = lines.transform;
             }
@@ -123,53 +128,45 @@ namespace Assets.Scripts
             DrawPath(path);
         }
 
-        //Method to initialise Hexagon width and height
-        void setSizes()
-        {
-            //renderer component attached to the Hex prefab is used to get the current width and height
-            hexWidth = Hex.renderer.bounds.size.x;
-            hexHeight = Hex.renderer.bounds.size.z;
-        }
-
-        //Method to calculate the position of the first hexagon tile
-        //The center of the hex grid is (0,0,0)
-        Vector3 calcInitPos()
-        {
-            Vector3 initPos;
-            //the initial position will be in the left upper corner
-            initPos = new Vector3(-hexWidth * gridWidthInHexes / 2f + hexWidth / 2, 0,
-                gridHeightInHexes / 2f * hexHeight - hexHeight / 2);
-
-            return initPos;
-        }
-
-        //method used to convert hex grid coordinates to game world coordinates
-        public Vector3 calcWorldCoord(Vector2 gridPos)
-        {
-            //Position of the first hex tile
-            Vector3 initPos = calcInitPos();
-            //Every second row is offset by half of the tile width
-            float offset = 0;
-            if (gridPos.y % 2 != 0)
-                offset = hexWidth / 2;
-
-            float x = initPos.x + offset + gridPos.x * hexWidth;
-            //Every new line is offset in z direction by 3/4 of the hexagon height
-            float z = initPos.z - gridPos.y * hexHeight * 0.75f;
-            return new Vector3(x, 0, z);
-        }
-
-        //The grid should be generated on game start
-        void Start()
-        {
-            setSizes();
-            createGrid();
-            createPlayers();
-        }
-
         private void createPlayers()
         {
-            Instantiate(Wizard, calcWorldCoord(new Vector2(0, 0)), Quaternion.identity);   
+            Players = new Dictionary<Point,PlayerBehavior>();
+            var startLocation = new Point(3, 3);
+            var wizard = (GameObject)Instantiate(Wizard, Transformer.GetWorldCoords(startLocation), Quaternion.identity);
+            PlayerBehavior pb = wizard.GetComponent<PlayerBehavior>();
+            pb.Speed = 1;
+            Players.Add(startLocation,pb);
+        }
+
+        public void HighlightMovableArea(Point origin)
+        {
+            PlayerBehavior player = Players[origin];
+            if (player == null) return;
+            HashSet<Point> visited = new HashSet<Point>();
+            Queue<Point> tileLocsToHighlight = new Queue<Point>();
+            tileLocsToHighlight.Enqueue(origin);
+
+            for(int radius=0;radius<player.Speed; radius++){
+                if (tileLocsToHighlight.Any<Point>())
+                {
+                    Point currentLoc = tileLocsToHighlight.Dequeue();
+                    visited.Add(currentLoc);
+                    foreach (Tile t in Board[currentLoc].Neighbors)
+                    {
+                        //skip if we've executed for this location before
+                        if (visited.Contains(t.Location)) continue;
+                        //get the related behavior for the tile
+                        TileBehavior tb = GameObject.FindObjectsOfType<TileBehavior>().Where(n => 
+                            n.tile.Location.X == t.Location.X && n.tile.Location.Y == t.Location.Y).First<TileBehavior>();
+                        //use tb to set the tile coloring
+                        tb.SetReachableColor();
+                        tileLocsToHighlight.Enqueue(t.Location);
+                    }
+                }
+                
+                
+            }
+
         }
     }
 }

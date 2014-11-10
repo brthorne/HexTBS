@@ -5,6 +5,8 @@ namespace Assets.Scripts
     public class TileBehavior : MonoBehaviour
     {
         public Tile tile;
+        [HideInInspector]
+        public PlayerBehavior resident;
         //After attaching this script to hex tile prefab don't forget to initialize 
         //following materials with the ones we created earlier
         public Material OpaqueMaterial;
@@ -78,18 +80,30 @@ namespace Assets.Scripts
             //if user left-clicks the tile set to origin
             if (Input.GetMouseButtonUp(0))
             {
-                if (!tile.Passable) return;
-                if(GridManager.instance.originTileTB != null &&
-                    GridManager.instance.originTileTB != this)
+                //if we find a player here then set to origin
+                //then color all the paths available
+                if (GridManager.instance.Players.ContainsKey(this.tile.Location))
                 {
-                    GridManager.instance.originTileTB.renderer.material = defaultMaterial; 
+                    if (!tile.Passable) return;
+                    if (GridManager.instance.originTileTB != null &&
+                        GridManager.instance.originTileTB != this)
+                    {
+                        GridManager.instance.originTileTB.renderer.material = defaultMaterial;
+                    }
+                    //set this tile as origin
+                    GridManager.instance.originTileTB = this;
+                    GridManager.instance.originTileTB.renderer.material = originMaterial;
+                    this.previousMaterial = this.renderer.material;
+                    //GridManager.instance.generateAndShowPath();
+                    GridManager.instance.HighlightMovableArea(tile.Location);
                 }
-                //set this tile as origin
-                GridManager.instance.originTileTB = this;                
-                GridManager.instance.originTileTB.renderer.material = originMaterial;
-                this.previousMaterial = this.renderer.material;
-                GridManager.instance.generateAndShowPath();
+
             }
+        }
+
+        public void SetReachableColor()
+        {
+            this.renderer.material = pathMaterial;
         }
     }
 }
