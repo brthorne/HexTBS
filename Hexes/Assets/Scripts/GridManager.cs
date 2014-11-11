@@ -26,6 +26,7 @@ namespace Assets.Scripts
         [HideInInspector]
         public ITransformer Transformer = null;
 
+        public GameObject PathMarker;
         //following public variable is used to store the hex model prefab;
         //instantiate it by dragging the prefab on this variable using unity editor
         public GameObject Hex;
@@ -71,8 +72,7 @@ namespace Assets.Scripts
                     hex.transform.position = Transformer.GetWorldCoords(gridPos);
                     hex.transform.parent = hexGridGO.transform;
                     var tb = hex.GetComponent<TileBehavior>();
-                    //y / 2 is subtracted from x because we are using straight axis coordinate system
-                    tb.tile = new Tile((int)x - (int)(y / 2), (int)y);
+                    tb.tile = new Tile(x, y);
                     Board.Add(gridPos, tb.tile);
                 }
             }
@@ -97,11 +97,8 @@ namespace Assets.Scripts
                 lines = new GameObject("Lines");
             foreach (Tile tile in path)
             {
-                var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                //calcWorldCoord method uses squiggly axis coordinates so we add y / 2 to convert x 
-                //coordinate from straight axis coordinate system
-                var gridPos = new Point(tile.X + tile.Y / 2, tile.Y);
-                marker.transform.position = Transformer.GetWorldCoords(gridPos);
+                var marker = (GameObject)GameObject.Instantiate(PathMarker);                
+                marker.transform.position = Transformer.GetWorldCoords(tile.Location);
                 this.pathMarkers.Add(marker);
                 marker.transform.parent = lines.transform;
             }
@@ -119,10 +116,10 @@ namespace Assets.Scripts
             //If you want to have some mountains, rivers, dirt roads or something else which 
             //might slow down the player you should replace the function with something that suits 
             //better your needs
-            Func<Tile, Tile, double> distance = (node1, node2) => 1;
+            Func<Tile, Tile, int> distance = (node1, node2) => 1;
             Func<Tile, Tile, double> estimate = (node1, node2) => 
                 Mathf.Sqrt(Mathf.Pow(node2.Location.X - node1.Location.X, 2) + 
-                Mathf.Pow(node2.Location.Y - node1.Location.Y, 2));
+                Mathf.Pow(node2.Location.Y - node1.Location.Y, 2)) - 1;
             var path = PathFinder.FindPath(originTileTB.tile, destTileTB.tile,
                 distance, estimate);
             DrawPath(path);
@@ -131,42 +128,25 @@ namespace Assets.Scripts
         private void createPlayers()
         {
             Players = new Dictionary<Point,PlayerBehavior>();
-            var startLocation = new Point(3, 3);
+            var startLocation = new Point(4, 4);
             var wizard = (GameObject)Instantiate(Wizard, Transformer.GetWorldCoords(startLocation), Quaternion.identity);
             PlayerBehavior pb = wizard.GetComponent<PlayerBehavior>();
-            pb.Speed = 1;
+            pb.Speed = 2;
             Players.Add(startLocation,pb);
         }
 
-        public void HighlightMovableArea(Point origin)
+        public void HighlightMovableArea(Tile startTile)
         {
-            PlayerBehavior player = Players[origin];
+            PlayerBehavior player = Players[startTile.Location];
             if (player == null) return;
-            HashSet<Point> visited = new HashSet<Point>();
-            Queue<Point> tileLocsToHighlight = new Queue<Point>();
-            tileLocsToHighlight.Enqueue(origin);
-
-            for(int radius=0;radius<player.Speed; radius++){
-                if (tileLocsToHighlight.Any<Point>())
-                {
-                    Point currentLoc = tileLocsToHighlight.Dequeue();
-                    visited.Add(currentLoc);
-                    foreach (Tile t in Board[currentLoc].Neighbors)
-                    {
-                        //skip if we've executed for this location before
-                        if (visited.Contains(t.Location)) continue;
-                        //get the related behavior for the tile
-                        TileBehavior tb = GameObject.FindObjectsOfType<TileBehavior>().Where(n => 
-                            n.tile.Location.X == t.Location.X && n.tile.Location.Y == t.Location.Y).First<TileBehavior>();
+            foreach(KeyValuePair<Point,int> pair in PathFinder.GetMovableArea<Tile>(startTile,(node1, node2) => 1,player.Speed,Board))
+            {
+                TileBehavior tb = GameObject.FindObjectsOfType<TileBehavior>().Where(n => 
+                            n.tile.Location.X == pair.Key.X && 
+                            n.tile.Location.Y == pair.Key.Y).First<TileBehavior>();
                         //use tb to set the tile coloring
                         tb.SetReachableColor();
-                        tileLocsToHighlight.Enqueue(t.Location);
-                    }
-                }
-                
-                
-            }
-
+            }            
         }
     }
 }

@@ -24,20 +24,35 @@ namespace Assets.Scripts
         }
 
         //change of coordinates when moving in any direction
-        public static List<Point> NeighbourShift
+        //even rows are shifted left relative to odd rows
+        public static List<Point> NeighbourShift(Point p)
         {
-            get
-            {
-                return new List<Point>
+            List<Point> neighbors;
+            if (p.Y % 2 == 0) 
+            { 
+                neighbors = new List<Point>
                 {
-                    new Point(0, 1),
-                    new Point(1, 0),
-                    new Point(1, -1),
-                    new Point(0, -1),
                     new Point(-1, 0),
-                    new Point(-1, 1),
+                    new Point(-1,1),
+                    new Point(0,1),
+                    new Point(1,0),
+                    new Point(0,-1),
+                    new Point(-1,-1)
                 };
             }
+            else
+            {
+                neighbors = new List<Point>
+                {
+                    new Point(-1,0),
+                    new Point(0,1),
+                    new Point(1,1),
+                    new Point(1,0),
+                    new Point(1,-1),
+                    new Point(0,-1)
+                };
+            }
+            return neighbors;
         }
 
         public void FindNeighbours(Dictionary<Point, Tile> Board,
@@ -45,7 +60,7 @@ namespace Assets.Scripts
         {
             List<Tile> neighbors = new List<Tile>();
 
-            foreach (Point point in NeighbourShift)
+            foreach (Point point in NeighbourShift(this.Location))
             {
                 int neighbourX = X + point.X;
                 int neighbourY = Y + point.Y;

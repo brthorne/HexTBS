@@ -53,8 +53,10 @@
     <Compile Include="Assets\Scripts\AssemblyInfo.cs" />
     <Compile Include="Assets\Scripts\GridManager.cs" />
     <Compile Include="Assets\Scripts\GridObject.cs" />
+    <Compile Include="Assets\Scripts\IDistance.cs" />
     <Compile Include="Assets\Scripts\IHasNeighbors.cs" />
     <Compile Include="Assets\Scripts\ITransformer.cs" />
+    <Compile Include="Assets\Scripts\NodeWrapper.cs" />
     <Compile Include="Assets\Scripts\Path.cs" />
     <Compile Include="Assets\Scripts\PathFinder.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />

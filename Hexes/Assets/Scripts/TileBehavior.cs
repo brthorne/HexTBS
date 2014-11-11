@@ -45,6 +45,9 @@ namespace Assets.Scripts
                 this.previousMaterial = this.renderer.material;
                 this.renderer.material = mouseOverMaterial;
             //}
+                Debug.Log(tile.ToString() + " <-> " + 
+                    GridManager.instance.Transformer.GetWorldCoords(tile.Location).ToString() +
+                    " <-> " + GridManager.instance.Transformer.GetGridCoords(GridManager.instance.Transformer.GetWorldCoords(tile.Location)).ToString());
         }
 
         //changes back to fully transparent material when mouse cursor is no longer hovering over the tile
@@ -95,7 +98,7 @@ namespace Assets.Scripts
                     GridManager.instance.originTileTB.renderer.material = originMaterial;
                     this.previousMaterial = this.renderer.material;
                     //GridManager.instance.generateAndShowPath();
-                    GridManager.instance.HighlightMovableArea(tile.Location);
+                    GridManager.instance.HighlightMovableArea(tile);
                 }
 
             }
