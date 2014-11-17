@@ -97,6 +97,7 @@ namespace Assets.Scripts
                 lines = new GameObject("Lines");
             foreach (Tile tile in path)
             {
+                if (tile == originTileTB.tile) continue;
                 var marker = (GameObject)GameObject.Instantiate(PathMarker);                
                 marker.transform.position = Transformer.GetWorldCoords(tile.Location);
                 this.pathMarkers.Add(marker);
