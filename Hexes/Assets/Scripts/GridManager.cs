@@ -131,7 +131,7 @@ namespace Assets.Scripts
             var startLocation = new Point(4, 4);
             var wizard = (GameObject)Instantiate(Wizard, Transformer.GetWorldCoords(startLocation), Quaternion.identity);
             PlayerBehavior pb = wizard.GetComponent<PlayerBehavior>();
-            pb.Speed = 2;
+            pb.Speed = 3;
             Players.Add(startLocation,pb);
         }
 

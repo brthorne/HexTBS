@@ -61,21 +61,6 @@ namespace Assets.Scripts
             var reachable = new Dictionary<Point, int>();
             var unvisited = new PriorityQueue<int,NodeWrapper<Node>>();
 
-            //create wrappers and set distance to infinity.  add to univisited
-            //foreach (Node n in board.Values )
-            //{
-            //    var wrappedNode = new NodeWrapper<Node>(n);             
-            //    if (n == start)
-            //    {
-            //        wrappedNode.Distance = 0;
-            //    }
-            //    else
-            //    {
-            //        wrappedNode.Distance = 99999;
-            //    }
-            //    unvisited.Enqueue(wrappedNode.Distance,wrappedNode);            
-            //}
-
             unvisited.Enqueue(0, new NodeWrapper<Node>(start,0));
 
             NodeWrapper<Node> currentNode;
