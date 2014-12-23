@@ -5,16 +5,14 @@ namespace Assets.Scripts
     public class TileBehavior : MonoBehaviour
     {
         public Tile tile;
-        [HideInInspector]
-        public PlayerBehavior resident;
         //After attaching this script to hex tile prefab don't forget to initialize 
         //following materials with the ones we created earlier
-        public Material OpaqueMaterial;
         public Material defaultMaterial;
         public Material originMaterial;
         public Material destMaterial;
         public Material pathMaterial;
         public Material mouseOverMaterial;
+        public Material reachableMaterial;
 
         private Stack previousMaterials;
 
@@ -41,28 +39,28 @@ namespace Assets.Scripts
         //collider (Component -> Physics -> Mesh Collider) should be attached to the prefab
         void OnMouseEnter()
         {
-            GridManager.instance.selectedTile = tile;
+            GridManager.instance.mouseOverTile = this;
             PushMaterial();
             this.renderer.material = mouseOverMaterial;
-            Debug.Log(tile.ToString() + " <-> " + 
+            Debug.Log(tile.ToString() + " <-> " +
                     GridManager.instance.Transformer.GetWorldCoords(tile.Location).ToString() +
                     " <-> " + GridManager.instance.Transformer.GetGridCoords(GridManager.instance.Transformer.GetWorldCoords(tile.Location)).ToString());
+            //if we have an origin, draw path to dest
+            GridManager.instance.HighlightMouseoverPath(true);
         }
 
-        //changes back to fully transparent material when mouse cursor is no longer hovering over the tile
+        //changes to previous material when mouse cursor is no longer hovering over the tile
         void OnMouseExit()
         {
-            GridManager.instance.selectedTile = null;
-            if(this.renderer.material != destMaterial &&
-                this.renderer.material != originMaterial)
-            {
-                PopMaterial();
-            }
+            GridManager.instance.mouseOverTile = null;
+            PopMaterial();
+            GridManager.instance.HighlightMouseoverPath(false);
         }
 
         //called every frame when mouse cursor is on this tile
         void OnMouseOver()
         {
+          
             //if player right-clicks on the tile, set to destination
             if (Input.GetMouseButtonUp(1))
             {
@@ -104,6 +102,13 @@ namespace Assets.Scripts
 
         public void SetReachableColor()
         {
+            PushMaterial();
+            this.renderer.material = reachableMaterial;
+        }
+
+        public void SetPathColor()
+        {
+            PushMaterial();
             this.renderer.material = pathMaterial;
         }
     }

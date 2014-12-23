@@ -14,7 +14,7 @@ namespace Assets.Scripts
 
         //selectedTile stores the tile mouse cursor is hovering on
         [HideInInspector]
-        public Tile selectedTile = null;
+        public TileBehavior mouseOverTile = null;
         //TB of the tile which is the start of the path
         [HideInInspector]
         public TileBehavior originTileTB = null;
@@ -37,6 +37,13 @@ namespace Assets.Scripts
         public int gridHeightInHexes = 10;
 
         public GameObject Wizard;
+
+        IEnumerable<Tile> mouseoverPath;
+
+        Func<Tile, Tile, int> distance = (node1, node2) => 1;
+        Func<Tile, Tile, double> estimate = (node1, node2) =>
+            Mathf.Sqrt(Mathf.Pow(node2.Location.X - node1.Location.X, 2) +
+            Mathf.Pow(node2.Location.Y - node1.Location.Y, 2)) - 1;
 
         void Awake()
         {
@@ -77,7 +84,7 @@ namespace Assets.Scripts
             }
         }
 
-        private void DrawPath(IEnumerable<Tile> path)
+        private void MarkPath(IEnumerable<Tile> path)
         {
             if (this.pathMarkers == null)
                 this.pathMarkers = new List<GameObject>();
@@ -99,25 +106,38 @@ namespace Assets.Scripts
             }
         }
 
+        private void highlightPath(IEnumerable<Tile> path)
+        {
+            foreach (Tile t in path)
+            {
+                TileBehavior tb = GameObject.FindObjectsOfType<TileBehavior>().Where(n =>
+                    n.tile.Location.X == t.X &&
+                    n.tile.Location.Y == t.Y).First<TileBehavior>();
+                tb.SetPathColor();
+            }
+        }
+
+        public Path<Tile> GeneratePath()
+        {
+            return PathFinder.FindPath(originTileTB.tile, mouseOverTile.tile,
+                distance, estimate);
+        }
+
         public void generateAndShowPath()
         {
             //Don't do anything if origin or destination is not defined yet
             if (originTileTB == null || destTileTB == null)
             {
-                DrawPath(new List<Tile>());
+                MarkPath(new List<Tile>());
                 return;
             }
             //We assume that the distance between any two adjacent tiles is 1
             //If you want to have some mountains, rivers, dirt roads or something else which 
             //might slow down the player you should replace the function with something that suits 
             //better your needs
-            Func<Tile, Tile, int> distance = (node1, node2) => 1;
-            Func<Tile, Tile, double> estimate = (node1, node2) => 
-                Mathf.Sqrt(Mathf.Pow(node2.Location.X - node1.Location.X, 2) + 
-                Mathf.Pow(node2.Location.Y - node1.Location.Y, 2)) - 1;
             var path = PathFinder.FindPath(originTileTB.tile, destTileTB.tile,
                 distance, estimate);
-            DrawPath(path);
+            MarkPath(path);
         }
 
         private void createPlayers()
@@ -142,6 +162,29 @@ namespace Assets.Scripts
                         //use tb to set the tile coloring
                         tb.SetReachableColor();
             }            
+        }
+
+        public void HighlightMouseoverPath(bool go)
+        {
+            if (go)
+            {
+                if (originTileTB != null)
+                {
+                    mouseoverPath = GridManager.instance.GeneratePath();
+                    highlightPath(mouseoverPath);
+                }
+            }
+            else if(mouseoverPath != null)
+            {
+                foreach (Tile t in mouseoverPath)
+                {
+                    TileBehavior tb = GameObject.FindObjectsOfType<TileBehavior>().Where(n =>
+                        n.tile.Location.X == t.X &&
+                        n.tile.Location.Y == t.Y).First<TileBehavior>();
+                    tb.PopMaterial();
+                }
+                mouseoverPath = null;
+            }
         }
     }
 }
