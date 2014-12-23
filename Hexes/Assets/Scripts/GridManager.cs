@@ -27,20 +27,14 @@ namespace Assets.Scripts
         public ITransformer Transformer = null;
 
         public GameObject PathMarker;
+        List<GameObject> pathMarkers;
+
         //following public variable is used to store the hex model prefab;
         //instantiate it by dragging the prefab on this variable using unity editor
         public GameObject Hex;
         //next two variables can also be instantiated using unity editor
         public int gridWidthInHexes = 10;
         public int gridHeightInHexes = 10;
-
-        //Line should be initialised to some 3d object that can fit nicely in the center of a 
-        //hex tile and will be used to indicate the path. For example, it can be just a simple small 
-        //sphere with some material attached to it. Initialise the variable using inspector pane.
-        //public GameObject PathMarker;
-
-        //List to hold "Lines" indicating the path
-        List<GameObject> pathMarkers;
 
         public GameObject Wizard;
 
