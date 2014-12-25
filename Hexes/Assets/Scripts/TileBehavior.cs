@@ -65,17 +65,6 @@ namespace Assets.Scripts
             if (Input.GetMouseButtonUp(1))
             {
                 if (!tile.Passable) return;
-                //if grid manager had an old destination, reset it to default
-                //if (GridManager.instance.destTileTB != null &&
-                //    GridManager.instance.destTileTB != this)
-                //{
-                //    GridManager.instance.destTileTB.PopMaterial();
-                //}
-                //set this tile as dest
-                //GridManager.instance.destTileTB = this;
-                //PushMaterial();
-                //this.renderer.material = destMaterial;
-                //GridManager.instance.generateAndShowPath();
                 GridManager.instance.CreateMoves();
             }
             //if user left-clicks the tile set to origin

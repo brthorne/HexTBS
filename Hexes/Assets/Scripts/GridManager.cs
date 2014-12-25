@@ -84,28 +84,6 @@ namespace Assets.Scripts
             }
         }
 
-        private void MarkPath(IEnumerable<Tile> path)
-        {
-            if (this.pathMarkers == null)
-                this.pathMarkers = new List<GameObject>();
-            //Destroy game objects which used to indicate the path
-            this.pathMarkers.ForEach(Destroy);
-            this.pathMarkers.Clear();
-
-            //Lines game object is used to hold all the "Line" game objects indicating the path
-            GameObject lines = GameObject.Find("Lines");
-            if (lines == null)
-                lines = new GameObject("Lines");
-            foreach (Tile tile in path)
-            {
-                if (tile == originTileTB.tile) continue;
-                var marker = (GameObject)GameObject.Instantiate(PathMarker);                
-                marker.transform.position = Transformer.GetWorldCoords(tile.Location);
-                this.pathMarkers.Add(marker);
-                marker.transform.parent = lines.transform;
-            }
-        }
-
         private void highlightPath(Path<Tile> path)
         {
             foreach (Tile t in path)
@@ -115,23 +93,6 @@ namespace Assets.Scripts
                     n.tile.Location.Y == t.Y).First<TileBehavior>();
                 tb.SetPathColor();
             }
-        }
-
-        public void generateAndShowPath()
-        {
-            //Don't do anything if origin or destination is not defined yet
-            if (originTileTB == null || destTileTB == null)
-            {
-                MarkPath(new List<Tile>());
-                return;
-            }
-            //We assume that the distance between any two adjacent tiles is 1
-            //If you want to have some mountains, rivers, dirt roads or something else which 
-            //might slow down the player you should replace the function with something that suits 
-            //better your needs
-            var path = PathFinder.FindPath(originTileTB.tile, destTileTB.tile,
-                distance, estimate);
-            MarkPath(path);
         }
 
         private void createPlayers()
