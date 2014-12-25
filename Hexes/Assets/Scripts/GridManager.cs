@@ -38,7 +38,7 @@ namespace Assets.Scripts
 
         public GameObject Wizard;
 
-        IEnumerable<Tile> mouseoverPath;
+        Path<Tile> mouseoverPath;
 
         Func<Tile, Tile, int> distance = (node1, node2) => 1;
         Func<Tile, Tile, double> estimate = (node1, node2) =>
@@ -106,7 +106,7 @@ namespace Assets.Scripts
             }
         }
 
-        private void highlightPath(IEnumerable<Tile> path)
+        private void highlightPath(Path<Tile> path)
         {
             foreach (Tile t in path)
             {
@@ -115,12 +115,6 @@ namespace Assets.Scripts
                     n.tile.Location.Y == t.Y).First<TileBehavior>();
                 tb.SetPathColor();
             }
-        }
-
-        public Path<Tile> GeneratePath()
-        {
-            return PathFinder.FindPath(originTileTB.tile, mouseOverTile.tile,
-                distance, estimate);
         }
 
         public void generateAndShowPath()
@@ -170,7 +164,8 @@ namespace Assets.Scripts
             {
                 if (originTileTB != null)
                 {
-                    mouseoverPath = GridManager.instance.GeneratePath();
+                    mouseoverPath = PathFinder.FindPath(originTileTB.tile, mouseOverTile.tile,
+                        distance, estimate); 
                     highlightPath(mouseoverPath);
                 }
             }
@@ -185,6 +180,30 @@ namespace Assets.Scripts
                 }
                 mouseoverPath = null;
             }
+        }
+
+        public void CreateMoves()
+        {
+            ActionManager.instance.GenerateMoves(mouseoverPath);
+        }
+
+        private void UnSetOriginTile()
+        {
+            originTileTB.PopMaterial();
+            originTileTB = null;
+        }
+
+        /// <summary>
+        /// magic hand that moves from start to dest without respect to rules.  
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="dest"></param>
+        public void Move(Point start, Point dest)
+        {                      
+            PlayerBehavior pb = Players[start];
+            pb.transform.position = Transformer.GetWorldCoords(dest);
+            Players.Add(dest, pb);
+            Players.Remove(start);
         }
     }
 }

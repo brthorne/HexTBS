@@ -30,9 +30,10 @@ namespace Assets.Scripts
             }
         }
 
-        public void PushMaterial()
-        {
+        public void PushMaterial(Material showing)
+        {            
             previousMaterials.Push(this.renderer.material);
+            this.renderer.material = showing;
         }
 
         //IMPORTANT: for methods like OnMouseEnter, OnMouseExit and so on to work, 
@@ -40,8 +41,7 @@ namespace Assets.Scripts
         void OnMouseEnter()
         {
             GridManager.instance.mouseOverTile = this;
-            PushMaterial();
-            this.renderer.material = mouseOverMaterial;
+            PushMaterial(mouseOverMaterial);
             Debug.Log(tile.ToString() + " <-> " +
                     GridManager.instance.Transformer.GetWorldCoords(tile.Location).ToString() +
                     " <-> " + GridManager.instance.Transformer.GetGridCoords(GridManager.instance.Transformer.GetWorldCoords(tile.Location)).ToString());
@@ -66,16 +66,17 @@ namespace Assets.Scripts
             {
                 if (!tile.Passable) return;
                 //if grid manager had an old destination, reset it to default
-                if (GridManager.instance.destTileTB != null &&
-                    GridManager.instance.destTileTB != this)
-                {
-                    GridManager.instance.destTileTB.PopMaterial();
-                }
+                //if (GridManager.instance.destTileTB != null &&
+                //    GridManager.instance.destTileTB != this)
+                //{
+                //    GridManager.instance.destTileTB.PopMaterial();
+                //}
                 //set this tile as dest
-                GridManager.instance.destTileTB = this;
-                PushMaterial();
-                this.renderer.material = destMaterial;
-                GridManager.instance.generateAndShowPath();
+                //GridManager.instance.destTileTB = this;
+                //PushMaterial();
+                //this.renderer.material = destMaterial;
+                //GridManager.instance.generateAndShowPath();
+                GridManager.instance.CreateMoves();
             }
             //if user left-clicks the tile set to origin
             if (Input.GetMouseButtonUp(0))
@@ -92,8 +93,7 @@ namespace Assets.Scripts
                     }
                     //set this tile as origin
                     GridManager.instance.originTileTB = this;
-                    PushMaterial();
-                    this.renderer.material = originMaterial;                    
+                    PushMaterial(originMaterial);       
                     GridManager.instance.HighlightMovableArea(tile);
                 }
 
@@ -102,14 +102,12 @@ namespace Assets.Scripts
 
         public void SetReachableColor()
         {
-            PushMaterial();
-            this.renderer.material = reachableMaterial;
+            PushMaterial(reachableMaterial);
         }
 
         public void SetPathColor()
         {
-            PushMaterial();
-            this.renderer.material = pathMaterial;
+            PushMaterial(pathMaterial);
         }
     }
 }

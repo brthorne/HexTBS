@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Assets.Scripts
 {
-    public class PlayerBehavior : MonoBehaviour 
+    public class PlayerBehavior : MonoBehaviour
     {
         public int Speed = 2;
         public int HealthMax; 
